@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
@@ -83,6 +84,7 @@ func (cli *CLI) Run(args []string) int {
 		commitish  string
 		name       string
 		body       string
+		filename   string
 		draft      bool
 		prerelease bool
 
@@ -121,6 +123,9 @@ func (cli *CLI) Run(args []string) int {
 
 	flags.StringVar(&body, "body", "", "")
 	flags.StringVar(&body, "b", "", "")
+
+	flags.StringVar(&filename, "filename", "", "")
+	flags.StringVar(&filename, "f", "", "")
 
 	flags.BoolVar(&draft, "draft", false, "")
 	flags.BoolVar(&prerelease, "prerelease", false, "")
@@ -262,6 +267,19 @@ func (cli *CLI) Run(args []string) int {
 	}
 
 	Debugf("Name: %s", name)
+	if filename!="" {
+		f, err := os.Open(filename)
+		if err!=nil {
+			PrintRedf(cli.errStream, err.Error())
+			return ExitCodeBadArgs
+		}
+		b, err := ioutil.ReadAll(f)
+		if err != nil {
+			PrintRedf(cli.errStream, err.Error())
+			return ExitCodeBadArgs
+		}
+		body = string(b)
+	}
 
 	// Prepare create release request
 	req := &github.RepositoryRelease{
